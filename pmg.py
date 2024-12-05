@@ -4,13 +4,20 @@ import random
 import string
 import json
 import os
+import sqlite3
 from cryptography.fernet import Fernet
 
 class PasswordManager:
     def __init__(self):
         self.passwords = {}
+
+    def hash_password(self, password):
+        """Hash a password using SHA-256"""
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def __init__(self):
+        self.passwords = {}
         self.key_file = 'encryption_key.key'
-        self.data_file = 'passwords.json'
         self._init_encryption()
 
     def _init_encryption(self):
@@ -105,32 +112,55 @@ class PasswordManager:
         }[max(0, min(score, 7))]
         
         return f"{strength} - {'; '.join(feedback)}" if feedback else strength
-    def save_login(self, website, username, password):
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        encrypted_data = self.fernet.encrypt(
-            json.dumps({
-                'username': username,
-                'password': hashed_password
-            }).encode()
+    
+    def save_login(self, user_id, website, username, password):
+        conn = sqlite3.connect('password_manager.db')
+        c = conn.cursor()
+        # Store both hash for verification and encrypted password for retrieval
+        encrypted_password = self.fernet.encrypt(password.encode()).decode()
+        c.execute(
+            'INSERT INTO passwords (user_id, website, username, password_hash, encrypted_password) VALUES (?, ?, ?, ?, ?)',
+            (user_id, website, username, self.hash_password(password), encrypted_password)
         )
-        self.passwords[website] = encrypted_data.decode()
-        self._save_to_file()
+        conn.commit()
+        conn.close()
 
-    def get_login(self, website):
-        if website in self.passwords:
-            encrypted_data = self.passwords[website].encode()
-            decrypted_data = json.loads(self.fernet.decrypt(encrypted_data))
-            return decrypted_data['username'], decrypted_data['password']
+    def get_login(self, user_id, website):
+        conn = sqlite3.connect('password_manager.db')
+        c = conn.cursor()
+        c.execute(
+            'SELECT username, encrypted_password FROM passwords WHERE user_id=? AND website=?',
+            (user_id, website)
+        )
+        result = c.fetchone()
+        conn.close()
+        
+        if result:
+            username, encrypted_password = result
+            decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
+            return username, decrypted_password
         return None, None
-
-    def _save_to_file(self):
-        with open(self.data_file, 'w') as f:
-            json.dump(self.passwords, f)
-
+    
     def load_passwords(self):
         if os.path.exists(self.data_file):
             with open(self.data_file, 'r') as f:
                 self.passwords = json.load(f)
+
+    def hash_password(self, password):
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def get_login_by_id(self, login_id):
+        conn = sqlite3.connect('password_manager.db')
+        c = conn.cursor()
+        c.execute('SELECT website, username, encrypted_password FROM passwords WHERE id=?', (login_id,))
+        result = c.fetchone()
+        conn.close()
+        
+        if result:
+            website, username, encrypted_password = result
+            decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
+            return website, username, decrypted_password
+        return None, None, None
 
 # Example usage:
 if __name__ == "__main__":
@@ -151,3 +181,4 @@ if __name__ == "__main__":
         print(f"Retrieved credentials for example.com:")
         print(f"Username: {username}")
         print(f"Password hash: {password}")
+

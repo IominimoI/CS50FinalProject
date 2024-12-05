@@ -3,11 +3,14 @@ print("Starting Password Manager...")
 import customtkinter as ctk
 from pmg import PasswordManager
 import pyperclip
+import sqlite3
+from login_window import LoginWindow
+from database import initialize_database
 
 class PasswordManagerGUI:
-    def __init__(self):
+    def __init__(self, user_id):
+        self.user_id = user_id
         self.pm = PasswordManager()
-        self.pm.load_passwords()
         
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -21,13 +24,16 @@ class PasswordManagerGUI:
         
         self.tab_generate = self.tabview.add("Generate Password")
         self.tab_store = self.tabview.add("Store Login")
-        self.tab_retrieve = self.tabview.add("Retrieve Login")
+        self.tab_retrieve = self.tabview.add("Search Login")
+        self.tab_browse = self.tabview.add("Browse Login")
         self.tab_check = self.tabview.add("Check Password")
         
         self._setup_generate_tab()
         self._setup_store_tab()
         self._setup_retrieve_tab()
         self._setup_check_tab()
+        self._setup_browse_tab()
+
 
     def _setup_check_tab(self):
         self.check_password_label = ctk.CTkLabel(self.tab_check, text="Enter Password to Check:")
@@ -98,7 +104,7 @@ class PasswordManagerGUI:
         length = int(self.length_slider.get())
         complexity = int(self.complexity_slider.get())
         
-        # Modify your PasswordManager to handle complexity levels
+        # Handle complexity levels
         password = self.pm.generate_password(length, complexity)
         strength = self.pm.check_password_strength(password)
         
@@ -144,6 +150,77 @@ class PasswordManagerGUI:
         
         self.results_display = ctk.CTkTextbox(self.tab_retrieve, height=150)
         self.results_display.pack(pady=20, padx=20, fill="x")
+    
+    def _setup_browse_tab(self):
+        # Create frame for the list
+        self.browse_frame = ctk.CTkFrame(self.tab_browse)
+        self.browse_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Create scrollable frame
+        self.browse_list = ctk.CTkScrollableFrame(self.browse_frame)
+        self.browse_list.pack(fill="both", expand=True)
+        
+        # Add refresh button
+        self.refresh_btn = ctk.CTkButton(
+            self.tab_browse,
+            text="Refresh List",
+            command=self._refresh_browse_list
+        )
+        self.refresh_btn.pack(pady=10)
+
+    def _refresh_browse_list(self):
+        # Clear existing widgets
+        for widget in self.browse_list.winfo_children():
+            widget.destroy()
+        
+        # Get all logins for current user
+        conn = sqlite3.connect('password_manager.db')
+        c = conn.cursor()
+        c.execute('SELECT id, website, username FROM passwords WHERE user_id=?', (self.user_id,))
+        logins = c.fetchall()
+        conn.close()
+        
+        # Create buttons for each login
+        for login_id, website, username in logins:
+            login_frame = ctk.CTkFrame(self.browse_list)
+            login_frame.pack(fill="x", padx=5, pady=2)
+            
+            website_label = ctk.CTkLabel(login_frame, text=f"Website: {website}")
+            website_label.pack(side="left", padx=5)
+            
+            show_btn = ctk.CTkButton(
+                login_frame,
+                text="Show Details",
+                command=lambda id=login_id: self._show_login_details(id)
+            )
+            show_btn.pack(side="right", padx=5)
+
+    def _show_login_details(self, login_id):
+        website, username, password = self.pm.get_login_by_id(login_id)
+    
+        if website:
+            popup = ctk.CTkToplevel()
+            popup.title("Login Details")
+            popup.geometry("400x200")
+        
+            ctk.CTkLabel(popup, text=f"Website: {website}").pack(pady=5)
+            ctk.CTkLabel(popup, text=f"Username: {username}").pack(pady=5)
+        
+            password_frame = ctk.CTkFrame(popup)
+            password_frame.pack(pady=10)
+        
+            password_var = ctk.StringVar(value="********")
+            password_label = ctk.CTkLabel(password_frame, textvariable=password_var)
+            password_label.pack(side="left", padx=5)
+        
+            def toggle_password():
+                if password_var.get() == "********":
+                    password_var.set(password)
+                else:
+                    password_var.set("********")
+        
+            show_btn = ctk.CTkButton(password_frame, text="Show/Hide", command=toggle_password)
+            show_btn.pack(side="right", padx=5)
 
     def _generate_password(self):
         length = int(self.length_slider.get())
@@ -165,18 +242,18 @@ class PasswordManagerGUI:
         password = self.password_entry.get()
         
         if website and username and password:
-            self.pm.save_login(website, username, password)
+            self.pm.save_login(self.user_id, website, username, password)
             self.website_entry.delete(0, "end")
             self.username_entry.delete(0, "end")
             self.password_entry.delete(0, "end")
 
     def _retrieve_login(self):
         website = self.retrieve_website_entry.get()
-        username, password = self.pm.get_login(website)
+        username, password = self.pm.get_login(self.user_id, website)
         
         self.results_display.delete("1.0", "end")
         if username:
-            self.results_display.insert("1.0", f"Username: {username}\nPassword Hash: {password}")
+            self.results_display.insert("1.0", f"Username: {username}\nPassword: {password}")
         else:
             self.results_display.insert("1.0", "No login found for this website.")
 
@@ -184,5 +261,13 @@ class PasswordManagerGUI:
         self.window.mainloop()
 
 if __name__ == "__main__":
-    app = PasswordManagerGUI()
-    app.run()
+    initialize_database()  # Initialize database if it doesn't exist
+    
+    # Show login window first
+    login = LoginWindow()
+    user_id = login.run()
+    
+    # Only launch main app if login is successful
+    if user_id:
+        app = PasswordManagerGUI(user_id)
+        app.run()
