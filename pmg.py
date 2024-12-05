@@ -55,37 +55,56 @@ class PasswordManager:
         
     def check_password_strength(self, password):
         score = 0
+        feedback = []
         
-        # Length checks
+        # Length checks with detailed feedback
         if len(password) < 4:
-            return "Very Weak"
+            return "Very Weak - Too Short"
         elif len(password) <= 8:
             score += 1
+            feedback.append("Consider using a longer password")
         elif len(password) <= 13:
             score += 2
+            feedback.append("Good length")
         else:
             score += 3
-            
-        # Character type checks
-        if any(c.islower() for c in password):
-            score += 1
-        if any(c.isupper() for c in password):
-            score += 1
-        if any(c.isdigit() for c in password):
-            score += 1
-        if any(c in string.punctuation for c in password):
-            score += 1
-            
-        return {
+            feedback.append("Excellent length")
+        
+        # Character variety checks
+        lowercase = any(c.islower() for c in password)
+        uppercase = any(c.isupper() for c in password)
+        digits = any(c.isdigit() for c in password)
+        special = any(c in string.punctuation for c in password)
+        
+        if lowercase: score += 1
+        if uppercase: score += 1
+        if digits: score += 1
+        if special: score += 1
+        
+        # Check for character variety
+        char_variety = len(set(password)) / len(password)
+        if char_variety < 0.5:
+            feedback.append("Too many repeated characters")
+        
+        # Sequential character check
+        for i in range(len(password)-2):
+            if ord(password[i+1]) == ord(password[i]) + 1 == ord(password[i+2]) - 1:
+                feedback.append("Avoid sequential characters")
+                score -= 1
+                break
+        
+        strength = {
             0: "Very Weak",
-            1: "Weak", 
+            1: "Weak",
             2: "Moderate",
             3: "Strong",
             4: "Very Strong",
             5: "Excellent",
             6: "Excellent",
             7: "Excellent"
-        }[score]
+        }[max(0, min(score, 7))]
+        
+        return f"{strength} - {'; '.join(feedback)}" if feedback else strength
     def save_login(self, website, username, password):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         encrypted_data = self.fernet.encrypt(
