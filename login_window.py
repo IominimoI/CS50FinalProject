@@ -6,7 +6,7 @@ class LoginWindow:
     def __init__(self):
         self.window = ctk.CTk()
         self.window.title("Login")
-        self.window.geometry("400x300")
+        self.window.geometry("450x350")
 
         header_label = ctk.CTkLabel(
             self.window, 

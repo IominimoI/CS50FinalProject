@@ -172,28 +172,37 @@ class PasswordManagerGUI:
         for widget in self.browse_list.winfo_children():
             widget.destroy()
         
-        # Get all logins for current user
-        conn = sqlite3.connect('password_manager.db')
-        c = conn.cursor()
-        c.execute('SELECT id, website, username FROM passwords WHERE user_id=?', (self.user_id,))
-        logins = c.fetchall()
-        conn.close()
-        
-        # Create buttons for each login
-        for login_id, website, username in logins:
-            login_frame = ctk.CTkFrame(self.browse_list)
-            login_frame.pack(fill="x", padx=5, pady=2)
+        try:
+            # Get all logins for current user
+            conn = sqlite3.connect('password_manager.db')
+            c = conn.cursor()
+            c.execute('SELECT id, website, username FROM passwords WHERE user_id=?', (self.user_id,))
+            logins = c.fetchall()
+            conn.close()
             
-            website_label = ctk.CTkLabel(login_frame, text=f"Website: {website}")
-            website_label.pack(side="left", padx=5)
-            
-            show_btn = ctk.CTkButton(
-                login_frame,
-                text="Show Details",
-                command=lambda id=login_id: self._show_login_details(id)
+            # Create buttons for each login
+            for login_id, website, username in logins:
+                login_frame = ctk.CTkFrame(self.browse_list)
+                login_frame.pack(fill="x", padx=5, pady=2)
+                
+                website_label = ctk.CTkLabel(login_frame, text=f"Website: {website}")
+                website_label.pack(side="left", padx=5)
+                
+                show_btn = ctk.CTkButton(
+                    login_frame,
+                    text="Show Details",
+                    command=lambda id=login_id: self._show_login_details(id)
+                )
+                show_btn.pack(side="right", padx=5)
+                
+        except sqlite3.OperationalError:
+            error_label = ctk.CTkLabel(
+                self.browse_list,
+                text="Database Error: The database structure appears to be corrupted.\nPlease restore from backup.",
+                text_color="red"
             )
-            show_btn.pack(side="right", padx=5)
-
+            error_label.pack(pady=20)
+            
     def _show_login_details(self, login_id):
         website, username, password = self.pm.get_login_by_id(login_id)
     
