@@ -34,7 +34,6 @@ class PasswordManagerGUI:
         self._setup_check_tab()
         self._setup_browse_tab()
 
-
     def _setup_check_tab(self):
         self.check_password_label = ctk.CTkLabel(self.tab_check, text="Enter Password to Check:")
         self.check_password_label.pack(pady=5)
@@ -201,17 +200,30 @@ class PasswordManagerGUI:
         if website:
             popup = ctk.CTkToplevel()
             popup.title("Login Details")
-            popup.geometry("400x200")
+            popup.geometry("400x300")
         
-            ctk.CTkLabel(popup, text=f"Website: {website}").pack(pady=5)
-            ctk.CTkLabel(popup, text=f"Username: {username}").pack(pady=5)
+            # Website section
+            website_frame = ctk.CTkFrame(popup)
+            website_frame.pack(pady=10, fill="x", padx=20)
+            ctk.CTkLabel(website_frame, text=f"Website: {website}").pack(side="left")
+            ctk.CTkButton(website_frame, text="Copy", 
+                     command=lambda: pyperclip.copy(website)).pack(side="right")
         
+            # Username section
+            username_frame = ctk.CTkFrame(popup)
+            username_frame.pack(pady=10, fill="x", padx=20)
+            ctk.CTkLabel(username_frame, text=f"Username: {username}").pack(side="left")
+            ctk.CTkButton(username_frame, text="Copy", 
+                     command=lambda: pyperclip.copy(username)).pack(side="right")
+        
+            # Password section
             password_frame = ctk.CTkFrame(popup)
-            password_frame.pack(pady=10)
+            password_frame.pack(pady=10, fill="x", padx=20)
         
             password_var = ctk.StringVar(value="********")
+            ctk.CTkLabel(password_frame, text="Password: ").pack(side="left")
             password_label = ctk.CTkLabel(password_frame, textvariable=password_var)
-            password_label.pack(side="left", padx=5)
+            password_label.pack(side="left")
         
             def toggle_password():
                 if password_var.get() == "********":
@@ -219,8 +231,11 @@ class PasswordManagerGUI:
                 else:
                     password_var.set("********")
         
-            show_btn = ctk.CTkButton(password_frame, text="Show/Hide", command=toggle_password)
-            show_btn.pack(side="right", padx=5)
+            ctk.CTkButton(password_frame, text="Copy", 
+                     command=lambda: pyperclip.copy(password)).pack(side="right")
+            ctk.CTkButton(password_frame, text="👁", 
+                     command=toggle_password,
+                     width=30).pack(side="right", padx=5)
 
     def _generate_password(self):
         length = int(self.length_slider.get())

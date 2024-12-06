@@ -7,17 +7,37 @@ class LoginWindow:
         self.window = ctk.CTk()
         self.window.title("Login")
         self.window.geometry("400x300")
+
+        header_label = ctk.CTkLabel(
+            self.window, 
+            text="Password Manager and Generator",
+            font=("Arial", 20, "bold")
+        )
+        header_label.pack(pady=20)
         
-        self.username_label = ctk.CTkLabel(self.window, text="Username:")
-        self.username_label.pack(pady=5)
-        self.username_entry = ctk.CTkEntry(self.window, width=200)
-        self.username_entry.pack(pady=5)
+        # Create main form frame to contain all elements
+        form_frame = ctk.CTkFrame(self.window)
+        form_frame.pack(pady=20)
         
-        self.password_label = ctk.CTkLabel(self.window, text="Password:")
-        self.password_label.pack(pady=5)
-        self.password_entry = ctk.CTkEntry(self.window, width=200, show="*")
-        self.password_entry.pack(pady=5)
+        # Username section
+        username_frame = ctk.CTkFrame(form_frame)
+        username_frame.pack(pady=5)
+        self.username_label = ctk.CTkLabel(username_frame, text="Username:", width=80)
+        self.username_label.pack(side="left", padx=5)
+        self.username_entry = ctk.CTkEntry(username_frame, width=200)
+        self.username_entry.pack(side="left", padx=5)
+        # Add invisible placeholder with same width as info button
+        ctk.CTkLabel(username_frame, text="", width=30).pack(side="left", padx=5)
         
+        # Password section
+        password_frame = ctk.CTkFrame(form_frame)
+        password_frame.pack(pady=5)
+        self.password_label = ctk.CTkLabel(password_frame, text="Password:", width=80)
+        self.password_label.pack(side="left", padx=5)
+        self.password_entry = ctk.CTkEntry(password_frame, width=200, show="*")
+        self.password_entry.pack(side="left", padx=5)
+        info_button = ctk.CTkButton(password_frame, text="ℹ", width=30, command=self._show_password_info)
+        info_button.pack(side="left", padx=5)        
         self.login_btn = ctk.CTkButton(self.window, text="Login", command=self._login)
         self.login_btn.pack(pady=10)
         
@@ -27,8 +47,26 @@ class LoginWindow:
         self.message_label = ctk.CTkLabel(self.window, text="")
         self.message_label.pack(pady=10)
         
-        self.user_id = None
-    
+        self.user_id = None    
+        
+    def _show_password_info(self):
+        info_popup = ctk.CTkToplevel()
+        info_popup.title("Password Guidelines")
+        info_popup.geometry("400x300")
+        
+        guidelines = """
+        For a secure password, make sure to:
+        • Use at least 8 characters
+        • Include uppercase and lowercase letters
+        • Include numbers
+        • Include special characters (!@#$%^&*)
+        • Avoid common words or phrases
+        • Don't use personal information
+        """
+        
+        info_label = ctk.CTkLabel(info_popup, text=guidelines, justify="left")
+        info_label.pack(pady=20, padx=20) 
+           
     def _hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
     

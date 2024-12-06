@@ -63,43 +63,57 @@ class PasswordManager:
     def check_password_strength(self, password):
         score = 0
         feedback = []
-        
+    
         # Length checks with detailed feedback
-        if len(password) < 4:
+        if len(password) < 8:
             return "Very Weak - Too Short"
-        elif len(password) <= 8:
+        elif len(password) <= 10:
             score += 1
             feedback.append("Consider using a longer password")
-        elif len(password) <= 13:
+        elif len(password) <= 14:
             score += 2
             feedback.append("Good length")
         else:
             score += 3
             feedback.append("Excellent length")
-        
-        # Character variety checks
-        lowercase = any(c.islower() for c in password)
-        uppercase = any(c.isupper() for c in password)
-        digits = any(c.isdigit() for c in password)
-        special = any(c in string.punctuation for c in password)
-        
-        if lowercase: score += 1
-        if uppercase: score += 1
-        if digits: score += 1
-        if special: score += 1
-        
-        # Check for character variety
+    
+        # Character variety checks with minimum requirements
+        lowercase = sum(1 for c in password if c.islower())
+        uppercase = sum(1 for c in password if c.isupper())
+        digits = sum(1 for c in password if c.isdigit())
+        special = sum(1 for c in password if c in string.punctuation)
+    
+        # Base scoring for character types
+        if lowercase >= 2: score += 1
+        if uppercase >= 2: score += 1
+        if digits >= 2: score += 1
+        if special >= 1: score += 1  # Reduced weight for special characters
+    
+        # Length bonus for passwords with good character variety
+        if len(password) > 12 and (lowercase and uppercase and digits):
+            score += 1
+    
+        # Check for character variety and patterns
         char_variety = len(set(password)) / len(password)
-        if char_variety < 0.5:
+        if char_variety < 0.7:
+            score -= 1
             feedback.append("Too many repeated characters")
-        
-        # Sequential character check
-        for i in range(len(password)-2):
-            if ord(password[i+1]) == ord(password[i]) + 1 == ord(password[i+2]) - 1:
-                feedback.append("Avoid sequential characters")
+    
+        # Check for common patterns
+        common_patterns = ['123', '321', 'abc', 'cba', '!!!', '...', '###']
+        for pattern in common_patterns:
+            if pattern in password.lower():
                 score -= 1
+                feedback.append("Avoid common patterns")
                 break
-        
+    
+        # Enforce maximum "Moderate" rating if missing numbers or special characters
+        if digits < 1 or special < 1:
+            score = min(score, 2)
+            if digits < 1: feedback.append("Add numbers for higher strength")
+            if special < 1: feedback.append("Add special characters for higher strength")
+    
+        # Final strength calculation
         strength = {
             0: "Very Weak",
             1: "Weak",
@@ -110,9 +124,8 @@ class PasswordManager:
             6: "Excellent",
             7: "Excellent"
         }[max(0, min(score, 7))]
-        
-        return f"{strength} - {'; '.join(feedback)}" if feedback else strength
     
+        return f"{strength} - {'; '.join(feedback)}" if feedback else strength    
     def save_login(self, user_id, website, username, password):
         conn = sqlite3.connect('password_manager.db')
         c = conn.cursor()
