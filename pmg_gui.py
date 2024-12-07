@@ -17,7 +17,7 @@ class PasswordManagerGUI:
         
         self.window = ctk.CTk()
         self.window.title("Secure Password Manager")
-        self.window.geometry("800x600")
+        self.window.geometry("920x500")
         
         self.tabview = ctk.CTkTabview(self.window)
         self.tabview.pack(padx=20, pady=20, fill="both", expand=True)
@@ -205,46 +205,58 @@ class PasswordManagerGUI:
             
     def _show_login_details(self, login_id):
         website, username, password = self.pm.get_login_by_id(login_id)
-    
+
         if website:
             popup = ctk.CTkToplevel()
             popup.title("Login Details")
             popup.geometry("400x300")
         
+            # Center the popup relative to main window
+            popup.withdraw()  # Hide window initially
+            popup.update()  # Update window size
+        
+            # Calculate center position
+            x = self.window.winfo_x() + (self.window.winfo_width() // 2) - (popup.winfo_width() // 2)
+            y = self.window.winfo_y() + (self.window.winfo_height() // 2) - (popup.winfo_height() // 2)
+        
+            # Set position and show window
+            popup.geometry(f"+{x//2}+{y//2}")
+            popup.deiconify()  # Show window
+
             # Website section
             website_frame = ctk.CTkFrame(popup)
             website_frame.pack(pady=10, fill="x", padx=20)
             ctk.CTkLabel(website_frame, text=f"Website: {website}").pack(side="left")
             ctk.CTkButton(website_frame, text="Copy", 
-                     command=lambda: pyperclip.copy(website)).pack(side="right")
-        
+                 command=lambda: pyperclip.copy(website)).pack(side="right")
+    
             # Username section
             username_frame = ctk.CTkFrame(popup)
             username_frame.pack(pady=10, fill="x", padx=20)
             ctk.CTkLabel(username_frame, text=f"Username: {username}").pack(side="left")
             ctk.CTkButton(username_frame, text="Copy", 
-                     command=lambda: pyperclip.copy(username)).pack(side="right")
-        
+                 command=lambda: pyperclip.copy(username)).pack(side="right")
+    
             # Password section
             password_frame = ctk.CTkFrame(popup)
             password_frame.pack(pady=10, fill="x", padx=20)
-        
+    
             password_var = ctk.StringVar(value="********")
             ctk.CTkLabel(password_frame, text="Password: ").pack(side="left")
             password_label = ctk.CTkLabel(password_frame, textvariable=password_var)
             password_label.pack(side="left")
-        
+    
             def toggle_password():
                 if password_var.get() == "********":
                     password_var.set(password)
                 else:
                     password_var.set("********")
-        
+    
             ctk.CTkButton(password_frame, text="Copy", 
-                     command=lambda: pyperclip.copy(password)).pack(side="right")
+                 command=lambda: pyperclip.copy(password)).pack(side="right")
             ctk.CTkButton(password_frame, text="👁", 
-                     command=toggle_password,
-                     width=30).pack(side="right", padx=5)
+                 command=toggle_password,
+                 width=30).pack(side="right", padx=5)
 
     def _generate_password(self):
         length = int(self.length_slider.get())

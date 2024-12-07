@@ -3,8 +3,11 @@ import random
 import string
 import os
 import sqlite3
-from cryptography.fernet import Fernet
 import stat
+import nltk
+from nltk.corpus import words
+from cryptography.fernet import Fernet
+
 
 class PasswordManager:
     def __init__(self):
@@ -14,6 +17,11 @@ class PasswordManager:
         self._secure_database()
         if not self.verify_database_integrity():
             raise Exception("Database integrity check failed. Please ensure the database is not corrupted.")
+        try:
+            nltk.data.find('corpora/words')
+        except LookupError:
+            nltk.download('words')
+        self.word_list = words.words()
 
     def _init_encryption(self):
         if not os.path.exists(self.key_file):
@@ -31,11 +39,9 @@ class PasswordManager:
 
     def generate_password(self, length=16, complexity=3):
         if complexity == 1:
-            words = ['cat', 'dog', 'bird', 'fish', 'lion', 'bear', 'wolf', 'deer', 
-                    'book', 'desk', 'lamp', 'tree', 'sun', 'moon', 'star', 'cloud', 
-                    'chair', 'car', 'bicycle', 'pot', 'lid', 'door', 'window', 'broom']
+            filtered_words = [word for word in self.word_list if 4 <= len(word) <= 8]
             num_words = min(3, length // 4)
-            password = ''.join(random.choice(words).capitalize() for _ in range(num_words))
+            password = ''.join(random.choice(filtered_words).capitalize() for _ in range(num_words))
             password += str(random.randint(100, 999))
             return password[:length]
             
@@ -104,8 +110,8 @@ class PasswordManager:
             1: "Weak",
             2: "Moderate",
             3: "Strong",
-            4: "Very Strong",
-            5: "Excellent",
+            4: "Strong",
+            5: "Very Strong",
             6: "Excellent",
             7: "Excellent"
         }[max(0, min(score, 7))]
