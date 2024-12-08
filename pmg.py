@@ -5,37 +5,47 @@ import os
 import sqlite3
 import stat
 import nltk
+from config import DB_PATH, KEY_PATH, BASE_DIR
 from nltk.corpus import words
 from cryptography.fernet import Fernet
 
 
 class PasswordManager:
     def __init__(self):
-        self.passwords = {}
-        self.key_file = 'encryption_key.key'
+        self.db_path = DB_PATH
+        self.key_file = KEY_PATH
+        os.makedirs(os.path.dirname(self.db_path), mode=0o700, exist_ok=True)
         self._init_encryption()
-        self._secure_database()
+        self._secure_files()
         if not self.verify_database_integrity():
             raise Exception("Database integrity check failed. Please ensure the database is not corrupted.")
         try:
             nltk.data.find('corpora/words')
         except LookupError:
             nltk.download('words')
+        self.passwords = {}
         self.word_list = words.words()
 
     def _init_encryption(self):
+        os.makedirs(BASE_DIR, mode=0o700, exist_ok=True)
+
         if not os.path.exists(self.key_file):
             key = Fernet.generate_key()
+            self.fernet = Fernet(key)
+            encrypted_key = self.fernet.encrypt(key)
             with open(self.key_file, 'wb') as key_file:
-                key_file.write(key)
+                key_file.write(encrypted_key)
         else:
             with open(self.key_file, 'rb') as key_file:
-                key = key_file.read()
-        self.fernet = Fernet(key)
+                encrypted_key = key_file.read()
+                temp_fernet = Fernet(Fernet.generate_key())
+                key = temp_fernet.decrypt(encrypted_key)
+                self.fernet = Fernet(key)
 
-    def _secure_database(self):
-        if os.path.exists('password_manager.db'):
-            os.chmod('password_manager.db', stat.S_IRUSR | stat.S_IWUSR)
+    def _secure_files(self):
+        if os.path.exists(self.db_path):
+            os.chmod(self.db_path, stat.S_IRUSR | stat.S_IWUSR)
+            os.chmod(self.key_file, stat.S_IRUSR | stat.S_IWUSR)
 
     def generate_password(self, length=16, complexity=3):
         if complexity == 1:
@@ -122,7 +132,7 @@ class PasswordManager:
         if not self.verify_database_integrity():
             raise Exception("Database integrity check failed")
         
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         encrypted_password = self.fernet.encrypt(password.encode()).decode()
         c.execute(
@@ -131,13 +141,13 @@ class PasswordManager:
         )
         conn.commit()
         conn.close()
-        self._secure_database()
+        self._secure_files()
 
     def get_login(self, user_id, website):
         if not self.verify_database_integrity():
             raise Exception("Database integrity check failed")
         
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute(
             'SELECT username, encrypted_password FROM passwords WHERE user_id=? AND website=?',
@@ -156,7 +166,7 @@ class PasswordManager:
         return hashlib.sha256(password.encode()).hexdigest()
 
     def get_login_by_id(self, login_id):
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute('SELECT website, username, encrypted_password FROM passwords WHERE id=?', (login_id,))
         result = c.fetchone()
@@ -169,7 +179,7 @@ class PasswordManager:
         return None, None, None
 
     def verify_database_integrity(self):
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         try:
             c.execute('PRAGMA integrity_check')

@@ -6,6 +6,7 @@ import pyperclip
 import sqlite3
 from login_window import LoginWindow
 from database import initialize_database
+from config import DB_PATH
 
 class PasswordManagerGUI:
     def __init__(self, user_id):
@@ -174,7 +175,7 @@ class PasswordManagerGUI:
         
         try:
             # Get all logins for current user
-            conn = sqlite3.connect('password_manager.db')
+            conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute('SELECT id, website, username FROM passwords WHERE user_id=?', (self.user_id,))
             logins = c.fetchall()
@@ -297,7 +298,8 @@ class PasswordManagerGUI:
         self.window.mainloop()
 
 if __name__ == "__main__":
-    initialize_database()  # Initialize database if it doesn't exist
+    # Initialize database if it doesn't exist
+    initialize_database() 
     
     # Show login window first
     login = LoginWindow()

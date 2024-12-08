@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import hashlib
 import sqlite3
+from config import DB_PATH
 
 class LoginWindow:
     def __init__(self):
@@ -74,7 +75,7 @@ class LoginWindow:
         username = self.username_entry.get()
         password = self._hash_password(self.password_entry.get())
         
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('SELECT id FROM users WHERE username=? AND password_hash=?', (username, password))
         result = c.fetchone()
@@ -101,7 +102,7 @@ class LoginWindow:
         
         password_hash = self._hash_password(password)
         
-        conn = sqlite3.connect('password_manager.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         try:
             c.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, password_hash))
