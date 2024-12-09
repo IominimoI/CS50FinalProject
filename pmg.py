@@ -12,8 +12,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
-
-
 class PasswordManager:
     def __init__(self, user_password):
         self.db_path = DB_PATH
@@ -55,15 +53,12 @@ class PasswordManager:
     def _init_encryption(self, user_password):
         if not os.path.exists(self.key_file):
             key, salt = self._derive_key(user_password)
-            print(f"Generated salt (hex): {salt.hex()}")  # Print readable hex
-
             self.fernet = Fernet(key)
             with open(self.key_file, 'wb') as key_file:
                 key_file.write(salt)  # Store only the salt
         else:
             with open(self.key_file, 'rb') as key_file:
                 salt = key_file.read()
-                print(f"Generated salt (hex): {salt.hex()}")  # Print readable hex
                 key, _ = self._derive_key(user_password, salt)  # Recreate key using stored salt
                 self.fernet = Fernet(key)
 

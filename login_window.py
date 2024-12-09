@@ -49,6 +49,7 @@ class LoginWindow:
         self.message_label.pack(pady=10)
         
         self.user_id = None    
+        self.user_password = None
         
     def _show_password_info(self):
         info_popup = ctk.CTkToplevel()
@@ -73,12 +74,13 @@ class LoginWindow:
     
     def _login(self):
         username = self.username_entry.get()
-        password = self._hash_password(self.password_entry.get())
+        password = self.password_entry.get()
+        password_hash = self._hash_password(password)
         self.user_password = password
         
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('SELECT id FROM users WHERE username=? AND password_hash=?', (username, password))
+        c.execute('SELECT id FROM users WHERE username=? AND password_hash=?', (username, password_hash))
         result = c.fetchone()
         conn.close()
         

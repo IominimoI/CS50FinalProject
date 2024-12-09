@@ -33,7 +33,7 @@ class PasswordManagerGUI:
         self.logout_btn.pack(side="right", padx=10, pady=5)
 
         self.tabview = ctk.CTkTabview(self.window)
-        self.tabview.pack(padx=20, pady=20, fill="both", expand=True)
+        self.tabview.pack(padx=20, pady=(0,20), fill="both", expand=True)
         
         self.tab_generate = self.tabview.add("Generate Password")
         self.tab_store = self.tabview.add("Store Login")
