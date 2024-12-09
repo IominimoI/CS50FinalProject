@@ -7,26 +7,31 @@ def initialize_database():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
-    # Create tables
-    c.execute('''
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL
-        )
-    ''')
+    # Check if tables exist
+    c.execute('''SELECT count(name) FROM sqlite_master 
+                 WHERE type='table' AND (name='users' OR name='passwords')''')
     
-    c.execute('''
-        CREATE TABLE passwords (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            website TEXT NOT NULL,
-            username TEXT NOT NULL,
-            password_hash TEXT NOT NULL,
-            encrypted_password TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    conn.commit()
+    if c.fetchone()[0] < 2:  # If both tables don't exist
+        # Create tables
+        c.execute('''
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL
+            )
+        ''')
+        
+        c.execute('''
+            CREATE TABLE passwords (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                website TEXT NOT NULL,
+                encrypted_username TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                encrypted_password TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
+        conn.commit()
     conn.close()

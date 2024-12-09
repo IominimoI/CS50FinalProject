@@ -9,17 +9,29 @@ from database import initialize_database
 from config import DB_PATH
 
 class PasswordManagerGUI:
-    def __init__(self, user_id):
+    def __init__(self, user_id, password):
         self.user_id = user_id
-        self.pm = PasswordManager()
+        self.pm = PasswordManager(password)
         
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
         self.window = ctk.CTk()
         self.window.title("Secure Password Manager")
-        self.window.geometry("920x500")
-        
+        self.window.geometry("920x600")
+
+        # Logout button in header
+        self.header_frame = ctk.CTkFrame(self.window, fg_color="transparent")
+        self.header_frame.pack(fill="x", padx=10, pady=(5,0))
+        self.logout_btn = ctk.CTkButton(
+            self.header_frame,
+            text="Logout",
+            command=self._logout,
+            width=70,
+            height=20
+        )
+        self.logout_btn.pack(side="right", padx=10, pady=5)
+
         self.tabview = ctk.CTkTabview(self.window)
         self.tabview.pack(padx=20, pady=20, fill="both", expand=True)
         
@@ -177,7 +189,7 @@ class PasswordManagerGUI:
             # Get all logins for current user
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
-            c.execute('SELECT id, website, username FROM passwords WHERE user_id=?', (self.user_id,))
+            c.execute('SELECT id, website, encrypted_username FROM passwords WHERE user_id=?', (self.user_id,))
             logins = c.fetchall()
             conn.close()
             
@@ -297,15 +309,22 @@ class PasswordManagerGUI:
     def run(self):
         self.window.mainloop()
 
+    def _logout(self):
+        self.window.destroy()  # Close the current window
+        initialize_database()   # Reset database connection
+        login = LoginWindow()   # Create new login window
+        user_id, password = login.run()
+        if user_id:
+            app = PasswordManagerGUI(user_id, password)
+            app.run()
+
 if __name__ == "__main__":
-    # Initialize database if it doesn't exist
     initialize_database() 
     
-    # Show login window first
     login = LoginWindow()
-    user_id = login.run()
+    user_id, password = login.run()
     
     # Only launch main app if login is successful
     if user_id:
-        app = PasswordManagerGUI(user_id)
+        app = PasswordManagerGUI(user_id, password)
         app.run()

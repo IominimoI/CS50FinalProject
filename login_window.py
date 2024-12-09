@@ -74,6 +74,7 @@ class LoginWindow:
     def _login(self):
         username = self.username_entry.get()
         password = self._hash_password(self.password_entry.get())
+        self.user_password = password
         
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
@@ -114,4 +115,4 @@ class LoginWindow:
 
     def run(self):
         self.window.mainloop()
-        return self.user_id
+        return self.user_id, self.user_password
