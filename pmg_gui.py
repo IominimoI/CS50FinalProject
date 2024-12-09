@@ -17,7 +17,7 @@ class PasswordManagerGUI:
         ctk.set_default_color_theme("blue")
         
         self.window = ctk.CTk()
-        self.window.title("Secure Password Manager")
+        self.window.title("Secure Password Manager & Generator")
         self.window.geometry("920x600")
 
         # Logout button in header
