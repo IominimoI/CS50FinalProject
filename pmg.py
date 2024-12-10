@@ -1,8 +1,7 @@
 """
-Copyright (c) 2024 [Your Name]
+Copyright (c) 2024 [Nico Geromin]
 Licensed under the MIT License - see LICENSE file for details
 """
-
 import hashlib
 import random
 import string
@@ -239,3 +238,14 @@ class PasswordManager:
             return result[0] == 'ok'
         finally:
             conn.close()
+
+    def delete_login(self, login_id):
+        if not self.verify_database_integrity():
+            raise Exception("Database integrity check failed")
+        
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('DELETE FROM passwords WHERE id=?', (login_id,))
+        conn.commit()
+        conn.close()
+        self._secure_files()

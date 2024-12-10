@@ -1,11 +1,11 @@
 """
-Copyright (c) 2024 [Your Name]
+Copyright (c) 2024 [Nico Geromin]
 Licensed under the MIT License - see LICENSE file for details
 """
-
 print("Starting Password Manager...")
 
 import customtkinter as ctk
+from tkinter import messagebox
 from pmg import PasswordManager
 import pyperclip
 import sqlite3
@@ -22,6 +22,9 @@ class PasswordManagerGUI:
         ctk.set_default_color_theme("blue")
         
         self.window = ctk.CTk()
+        self.window.withdraw()
+        self.window.iconbitmap("")
+        self.window.deiconify()
         self.window.title("Secure Password Manager & Generator")
         self.window.geometry("920x600")
 
@@ -225,7 +228,10 @@ class PasswordManagerGUI:
         website, username, password = self.pm.get_login_by_id(login_id)
 
         if website:
-            popup = ctk.CTkToplevel()
+            popup = ctk.CTkToplevel(self.window)
+            popup.withdraw()
+            popup.iconbitmap("")
+            popup.deiconify()
             popup.title("Login Details")
             popup.geometry("400x300")
         
@@ -263,6 +269,20 @@ class PasswordManagerGUI:
             ctk.CTkLabel(password_frame, text="Password: ").pack(side="left")
             password_label = ctk.CTkLabel(password_frame, textvariable=password_var)
             password_label.pack(side="left")
+            delete_frame = ctk.CTkFrame(popup)
+            delete_frame.pack(pady=20, fill="x", padx=20)
+            
+            def delete_login():
+                popup.iconbitmap("")
+                if messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this login?", parent=popup):
+                    self.pm.delete_login(login_id)
+                    popup.destroy()
+                    self._refresh_browse_list()
+            
+            ctk.CTkButton(delete_frame, 
+                        text="Delete Login",
+                        fg_color="#c75d5d",
+                        command=delete_login).pack(fill="x")
     
             def toggle_password():
                 if password_var.get() == "********":
@@ -315,7 +335,7 @@ class PasswordManagerGUI:
         self.window.mainloop()
 
     def _logout(self):
-        self.window.destroy()  # Close the current window
+        self.window.destroy()  
         initialize_database()   # Reset database connection
         login = LoginWindow()   # Create new login window
         user_id, password = login.run()
