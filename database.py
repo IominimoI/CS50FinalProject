@@ -1,3 +1,7 @@
+"""
+Copyright (c) 2024 [Nico Geromin]
+Licensed under the MIT License - see LICENSE file for details
+"""
 import os
 import sqlite3
 from config import DB_PATH, BASE_DIR

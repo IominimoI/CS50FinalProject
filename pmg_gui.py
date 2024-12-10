@@ -1,3 +1,8 @@
+"""
+Copyright (c) 2024 [Your Name]
+Licensed under the MIT License - see LICENSE file for details
+"""
+
 print("Starting Password Manager...")
 
 import customtkinter as ctk

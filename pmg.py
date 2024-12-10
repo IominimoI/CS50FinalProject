@@ -1,3 +1,8 @@
+"""
+Copyright (c) 2024 [Your Name]
+Licensed under the MIT License - see LICENSE file for details
+"""
+
 import hashlib
 import random
 import string

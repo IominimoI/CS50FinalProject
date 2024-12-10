@@ -39,6 +39,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
 app = BUNDLE(
     exe,
     name='PMG Secure.app',
@@ -46,7 +47,11 @@ app = BUNDLE(
     bundle_identifier='com.Iomin.pmgsecure', 
     info_plist={
         'CFBundleShortVersionString': '1.0.0',  # Version
-        'CFBundleGetInfoString': 'PMG Secure, Created by Nico Geromin',  # Info
-        'NSHumanReadableCopyright': 'Copyright © 2024 Nico Geromin'  # Copyright
+        'CFBundleGetInfoString': 'PMG Secure, Created by Nico Geromin',
+        'NSHumanReadableCopyright': 'Copyright © 2024 Nico Geromin. Licensed under MIT License',
+        'CFBundleDocumentTypes': [],
+        'LSMinimumSystemVersion': '10.13.0',
+        'LSApplicationCategoryType': 'public.app-category.utilities'
     }
 )
+

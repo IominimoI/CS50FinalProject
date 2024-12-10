@@ -1,3 +1,7 @@
+"""
+Copyright (c) 2024 [Nico Geromin]
+Licensed under the MIT License - see LICENSE file for details
+"""
 import customtkinter as ctk
 import hashlib
 import sqlite3
