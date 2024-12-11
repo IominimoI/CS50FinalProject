@@ -229,23 +229,17 @@ class PasswordManagerGUI:
 
         if website:
             popup = ctk.CTkToplevel(self.window)
-            popup.withdraw()
-            popup.iconbitmap("")
-            popup.deiconify()
             popup.title("Login Details")
             popup.geometry("400x300")
-        
-            # Center the popup relative to main window
-            popup.withdraw()  # Hide window initially
-            popup.update()  # Update window size
+
+            popup.update_idletasks()  # Update window size
         
             # Calculate center position
-            x = self.window.winfo_x() + (self.window.winfo_width() // 2) - (popup.winfo_width() // 2)
+            x = self.window.winfo_x() + (self.window.winfo_width() // 2 ) - (popup.winfo_width() // 2)
             y = self.window.winfo_y() + (self.window.winfo_height() // 2) - (popup.winfo_height() // 2)
         
             # Set position and show window
-            popup.geometry(f"+{x//2}+{y//2}")
-            popup.deiconify()  # Show window
+            popup.geometry(f"+{x}+{y}")
 
             # Website section
             website_frame = ctk.CTkFrame(popup)
@@ -273,12 +267,35 @@ class PasswordManagerGUI:
             delete_frame.pack(pady=20, fill="x", padx=20)
             
             def delete_login():
-                popup.iconbitmap("")
-                if messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this login?", parent=popup):
+                confirm_popup = ctk.CTkToplevel(popup)
+                confirm_popup.title("Confirm Delete")
+                confirm_popup.geometry("300x150")
+
+                confirm_popup.update_idletasks()  # Update window size
+                
+                # Calculate center position relative to Login Details window
+                x = popup.winfo_x() + (popup.winfo_width() - confirm_popup.winfo_width()) // 2
+                y = popup.winfo_y() + (popup.winfo_height() - confirm_popup.winfo_height()) // 2
+                
+                # Set position
+                confirm_popup.geometry(f"+{x}+{y}")
+                
+                ctk.CTkLabel(confirm_popup, text="Are you sure you want to delete this login?").pack(pady=20)
+                
+                button_frame = ctk.CTkFrame(confirm_popup, fg_color="transparent")
+                button_frame.pack(pady=10)
+                
+                def confirm():
                     self.pm.delete_login(login_id)
+                    confirm_popup.destroy()
                     popup.destroy()
                     self._refresh_browse_list()
-            
+                    
+                def cancel():
+                    confirm_popup.destroy()
+                
+                ctk.CTkButton(button_frame, text="Yes", command=confirm).pack(side="left", padx=10)
+                ctk.CTkButton(button_frame, text="No", command=cancel).pack(side="left", padx=10)            
             ctk.CTkButton(delete_frame, 
                         text="Delete Login",
                         fg_color="#c75d5d",
