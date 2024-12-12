@@ -86,21 +86,26 @@ A comprehensive password management solution built with Python, focusing on secu
    - Brute force protection
 
 2. **Data Protection**:
-   - All sensitive data is encrypted before storage.
-   - Passwords are hashed using SHA-256 for secure verification.
+   - All sensitive data is encrypted before storage
+   - Passwords are hashed using SHA-256 for secure verification
 
 3. **Database Security**:
-   - The database is encrypted and protected with strict file permissions.
-   - Integrity checks are performed to ensure data consistency.
+   - The database is encrypted and protected with strict file permissions
+   - Integrity checks are performed to ensure data consistency
 
-### Installation and Setup
+### Installation of the Build App (the simple and convenient way)
+1. Download the PMG Secure.dmg file from within the repository
+2. Double-click the downloaded file to install the app 
+   - Drag and drop the app icon to the Applications folder, you can now use the app and register as a new user
+
+### Installation and Setup for command line users (the curious way)
 1. **Clone the Repository**:
    ```bash
    git clone <repository-url>
    cd <repository-directory>
    ```
 
-2. **Create and activate a Virtual Environment**:
+2. **Create and activate a virtual environment**:
   ```bash
   python -m venv venv
   source venv/bin/activate
@@ -115,16 +120,20 @@ A comprehensive password management solution built with Python, focusing on secu
   ```bash
   python pmg_gui.py
   ```
-  - This will open the app window and automatically set up the database.
+  - This will open the app window and automatically set up the database
 
 ## Usage
 - Login/Register:
-  - Use the login window to access or create your account.
+  - Use the login window to access your account
+  - Use the register button to create a new account
 - Password Management:
-  - Use the tabs to generate, store, search, browse and manage your passwords securely.
+  - Use the tabs to generate, store, search, browse and manage your passwords securely
 
 ## Contribution
-Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
+Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details
+
+## Acknowledgments
+This application has been developed as a final project for the Harvard CS50x course. Special thanks to David Malan, Carter Zenke, Doug Lloyd and all the people who have made this possible for me and many others around the globe. I enjoyed this course and I am eager to learn more.
