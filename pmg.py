@@ -43,16 +43,6 @@ class PasswordManager:
         )
         key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
         return key, salt
-
-    def verify_database_integrity(self):
-        try:
-            conn = sqlite3.connect(self.db_path)
-            c = conn.cursor()
-            c.execute('SELECT * FROM users LIMIT 1')
-            conn.close()
-            return True
-        except sqlite3.OperationalError:
-            return False
         
     def _init_encryption(self, user_password):
         if not os.path.exists(self.key_file):
@@ -79,22 +69,6 @@ class PasswordManager:
         except Exception:
             return False
 
-    def _decrypt_stored_key(self, encrypted_key):
-        try:
-            # Try different Fernet instances until we find one that works
-            for _ in range(3):  # Limit attempts
-                temp_key = Fernet.generate_key()
-                temp_fernet = Fernet(temp_key)
-                try:
-                    key = temp_fernet.decrypt(encrypted_key)
-                    if self._verify_key(key):
-                        return key
-                except Exception:
-                    continue
-            raise Exception("Failed to decrypt key file")
-        except Exception as e:
-            raise Exception(f"Key verification failed: {str(e)}")
-
     def generate_password(self, length=16, complexity=3):
         if complexity == 1:
             filtered_words = [word for word in self.word_list if 4 <= len(word) <= 8]
@@ -120,61 +94,81 @@ class PasswordManager:
     def check_password_strength(self, password):
         score = 0
         feedback = []
-    
+
+        # Length scoring - more granular
         if len(password) < 8:
             return "Very Weak - Too Short"
         elif len(password) <= 10:
             score += 1
             feedback.append("Consider using a longer password")
-        elif len(password) <= 14:
-            score += 2
+        elif len(password) <= 12:
+            score += 1.5
             feedback.append("Good length")
+        elif len(password) <= 16:
+            score += 2
+            feedback.append("Very good length")
         else:
             score += 3
             feedback.append("Excellent length")
-    
+
+        # Character type scoring
         lowercase = sum(1 for c in password if c.islower())
         uppercase = sum(1 for c in password if c.isupper())
         digits = sum(1 for c in password if c.isdigit())
         special = sum(1 for c in password if c in string.punctuation)
-    
-        if lowercase >= 2: score += 1
-        if uppercase >= 2: score += 1
-        if digits >= 2: score += 1
-        if special >= 1: score += 1
-    
-        if len(password) > 12 and (lowercase and uppercase and digits):
-            score += 1
-    
+
+        # Reward high counts of each type
+        if lowercase >= 1: score += 0.5
+        if lowercase >= 3: score += 0.5
+        if uppercase >= 1: score += 0.5
+        if uppercase >= 3: score += 0.5
+        if digits >= 1: score += 0.5
+        if digits >= 3: score += 0.5
+        if digits <= 1: score -= 1.0
+        if special >= 1: score += 1.0
+        if special >= 3: score += 1.0
+
+        # Add feedback for missing elements
+        if not special:
+            feedback.append("Add special characters for higher strength")
+        if digits < 2:
+            feedback.append("Add more numbers")
+        if lowercase < 2:
+            feedback.append("Add more lowercase letters")
+        if uppercase < 2:
+            feedback.append("Add more uppercase letters")
+
+        # Character variety bonus
         char_variety = len(set(password)) / len(password)
-        if char_variety < 0.7:
+        if char_variety > 0.8: 
+            score += 1.5
+            feedback.append("Excellent character variety")
+        elif char_variety > 0.7:
+            score += 1.0
+        elif char_variety < 0.5:
             score -= 1
             feedback.append("Too many repeated characters")
-    
-        common_patterns = ['123', '321', 'abc', 'cba', '!!!', '...', '###']
-        for pattern in common_patterns:
-            if pattern in password.lower():
-                score -= 1
-                feedback.append("Avoid common patterns")
-                break
-    
-        if digits < 1 or special < 1:
-            score = min(score, 2)
-            if digits < 1: feedback.append("Add numbers for higher strength")
-            if special < 1: feedback.append("Add special characters for higher strength")
-    
+
+        # Common patterns check
+        common_patterns = ['123', '321', 'abc', 'cba', '!!!', '...', '###', 'Password', 
+                          '123456', 'qwerty', 'password', 'p@ssword', '12345678']
+        if any(pattern in password.lower() for pattern in common_patterns):
+            score -= 2
+            feedback.append("Avoid common patterns")
+
+        # Map final score to strength categories with proper recognition of exceptional passwords
         strength = {
             0: "Very Weak",
             1: "Weak",
             2: "Moderate",
-            3: "Strong",
-            4: "Strong",
-            5: "Very Strong",
-            6: "Excellent",
+            3: "Good",
+            4: "Pretty Good",
+            5: "Strong",
+            6: "Very Strong",
             7: "Excellent"
-        }[max(0, min(score, 7))]
-    
-        return f"{strength} - {'; '.join(feedback)}" if feedback else strength  
+        }[max(0, min(int(score), 7))]
+
+        return f"{strength} - {'; '.join(feedback)}" if feedback else strength
       
     def save_login(self, user_id, website, username, password):
         if not self.verify_database_integrity():
