@@ -97,6 +97,9 @@ A comprehensive password management solution built with Python, focusing on secu
 1. Download the PMG Secure.dmg file from within the repository
 2. Double-click the downloaded file to install the app 
    - Drag and drop the app icon to the Applications folder, you can now use the app and register as a new user
+3. Should Apple block you from opening the app, go to:
+   - System Preferences -> Security & Privacy -> Scroll down to the "Security" section -> Look for the message about PMG Secure being blocked -> Click "Open Anyway"
+   - The PMG Secure.app should now be able to open
 
 ### Installation and Setup for command line users (the curious way)
 1. **Clone the Repository**:
