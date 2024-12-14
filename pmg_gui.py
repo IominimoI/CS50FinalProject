@@ -25,7 +25,7 @@ class PasswordManagerGUI:
         self.window.iconbitmap("")
         self.window.deiconify()
         self.window.title("Secure Password Manager & Generator")
-        self.window.geometry("920x600")
+        self.window.geometry("1000x600")
 
         # Logout button in header
         self.header_frame = ctk.CTkFrame(self.window, fg_color="transparent")
@@ -61,21 +61,18 @@ class PasswordManagerGUI:
         self.check_password_entry = ctk.CTkEntry(self.tab_check, width=300)
         self.check_password_entry.pack(pady=5)
         
-        self.check_btn = ctk.CTkButton(
-            self.tab_check,
-            text="Check Strength",
-            command=self._check_password_strength
-        )
-        self.check_btn.pack(pady=20)
+        self.check_password_entry.bind('<KeyRelease>', self._check_password_strength_realtime)
         
         self.check_result = ctk.CTkLabel(self.tab_check, text="")
         self.check_result.pack(pady=10)
 
-    def _check_password_strength(self):
+    def _check_password_strength_realtime(self, event):
         password = self.check_password_entry.get()
         if password:
             strength = self.pm.check_password_strength(password)
-            self.check_result.configure(text=f"Password Strength: {strength}")
+            self.check_result.configure(text=f"Password Strength: {strength}", wraplength=800, justify="center")
+        else:
+            self.check_result.configure(text="")
 
     def _setup_generate_tab(self):
         self.length_label = ctk.CTkLabel(self.tab_generate, text="Password Length: 16")
@@ -102,8 +99,8 @@ class PasswordManagerGUI:
         self.password_display = ctk.CTkTextbox(self.tab_generate, height=100)
         self.password_display.pack(pady=20, padx=20, fill="x")
         
-        self.strength_label = ctk.CTkLabel(self.tab_generate, text="Password Strength: ")
-        self.strength_label.pack(pady=10)
+        self.strength_label = ctk.CTkLabel(self.tab_generate, text="Password Strength: ", wraplength=800, justify="center")
+        self.strength_label.pack(pady=5, padx=10, fill="x")
         
         self.copy_btn = ctk.CTkButton(
             self.tab_generate, 
@@ -129,7 +126,7 @@ class PasswordManagerGUI:
         
         self.password_display.delete("1.0", "end")
         self.password_display.insert("1.0", password)
-        self.strength_label.configure(text=f"Password Strength: {strength}")
+        self.strength_label.configure(text=f"Password Strength: {strength}", wraplength=800)
 
     def _setup_store_tab(self):
         self.website_label = ctk.CTkLabel(self.tab_store, text="Website:")

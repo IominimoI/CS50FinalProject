@@ -67,7 +67,7 @@ A comprehensive password management solution built with Python, focusing on secu
      - Password visibility toggle
   
   5. Check Password
-     - Comprehensive strength analysis
+     - Comprehensive realtime strength analysis
      - Security recommendations
      - Pattern detection
 
