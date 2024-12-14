@@ -5,7 +5,6 @@ Licensed under the MIT License - see LICENSE file for details
 print("Starting Password Manager...")
 
 import customtkinter as ctk
-from tkinter import messagebox
 from pmg import PasswordManager
 import pyperclip
 import sqlite3
@@ -172,15 +171,15 @@ class PasswordManagerGUI:
         self.results_display.pack(pady=20, padx=20, fill="x")
     
     def _setup_browse_tab(self):
-        # Create frame for the list
+        # Frame for the list
         self.browse_frame = ctk.CTkFrame(self.tab_browse)
         self.browse_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Create scrollable frame
+        # Scrollable frame
         self.browse_list = ctk.CTkScrollableFrame(self.browse_frame)
         self.browse_list.pack(fill="both", expand=True)
         
-        # Add refresh button
+        # Refresh button
         self.refresh_btn = ctk.CTkButton(
             self.tab_browse,
             text="Refresh List",
@@ -231,14 +230,15 @@ class PasswordManagerGUI:
             popup = ctk.CTkToplevel(self.window)
             popup.title("Login Details")
             popup.geometry("400x300")
+            popup.resizable(False, False)
+            popup.transient(self.window)
+            popup.grab_set()
 
-            popup.update_idletasks()  # Update window size
-        
             # Calculate center position
+            self.window.update_idletasks()  
             x = self.window.winfo_x() + (self.window.winfo_width() // 2 ) - (popup.winfo_width() // 2)
             y = self.window.winfo_y() + (self.window.winfo_height() // 2) - (popup.winfo_height() // 2)
         
-            # Set position and show window
             popup.geometry(f"+{x}+{y}")
 
             # Website section
@@ -270,10 +270,11 @@ class PasswordManagerGUI:
                 confirm_popup = ctk.CTkToplevel(popup)
                 confirm_popup.title("Confirm Delete")
                 confirm_popup.geometry("300x150")
-
-                confirm_popup.update_idletasks()  # Update window size
+                confirm_popup.resizable(False, False)
+                confirm_popup.transient(popup)
+                confirm_popup.grab_set()
                 
-                # Calculate center position relative to Login Details window
+                self.window.update_idletasks()
                 x = popup.winfo_x() + (popup.winfo_width() - confirm_popup.winfo_width()) // 2
                 y = popup.winfo_y() + (popup.winfo_height() - confirm_popup.winfo_height()) // 2
                 
@@ -313,16 +314,6 @@ class PasswordManagerGUI:
                  command=toggle_password,
                  width=30).pack(side="right", padx=5)
 
-    def _generate_password(self):
-        length = int(self.length_slider.get())
-        complexity = int(self.complexity_slider.get())
-        password = self.pm.generate_password(length, complexity)
-        strength = self.pm.check_password_strength(password)
-        
-        self.password_display.delete("1.0", "end")
-        self.password_display.insert("1.0", password)
-        self.strength_label.configure(text=f"Password Strength: {strength}")
-
     def _copy_to_clipboard(self):
         password = self.password_display.get("1.0", "end-1c")
         pyperclip.copy(password)
@@ -352,9 +343,9 @@ class PasswordManagerGUI:
         self.window.mainloop()
 
     def _logout(self):
-        self.window.destroy()  
-        initialize_database()   # Reset database connection
-        login = LoginWindow()   # Create new login window
+        self.window.destroy() 
+        initialize_database()
+        login = LoginWindow()
         user_id, password = login.run()
         if user_id:
             app = PasswordManagerGUI(user_id, password)
