@@ -1,5 +1,5 @@
 # Secure Password Manager & Generator (PMG Secure)
-#### Video Demo: <URL https://youtu.be/-Yei-hx_r2g>
+#### Video Demo: <URL https://youtu.be/2a_GSHWI2XM>
 #### Description:
 A comprehensive password management solution for Mac OS - built with Python, focusing on security, usability, and modern cryptographic standards. PMG Secure provides enterprise-grade password management capabilities with an intuitive user interface.
 
