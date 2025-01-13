@@ -103,7 +103,7 @@ A comprehensive password management solution for Mac OS - built with Python, foc
 ### Installation and Setup for command line users (the curious way)
 1. **Clone the Repository**:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/Iomin161/CS50FinalProject.git>
    cd <repository-directory>
    ```
 
