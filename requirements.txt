@@ -1,7 +1,7 @@
 altgraph==0.17.4
 cffi==1.17.1
 click==8.1.7
-cryptography==44.0.0
+cryptography==44.0.1
 customtkinter==5.2.2
 darkdetect==0.8.0
 joblib==1.4.2
