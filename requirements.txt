@@ -13,5 +13,5 @@ pyinstaller==6.11.1
 pyinstaller-hooks-contrib==2024.10
 pyperclip==1.9.0
 regex==2024.11.6
-setuptools==75.6.0
+setuptools==78.1.1
 tqdm==4.67.1
