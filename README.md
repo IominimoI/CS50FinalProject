@@ -1,141 +1,94 @@
-# Secure Password Manager & Generator (PMG Secure)
-#### Video Demo: <URL https://youtu.be/ZN_bsWcJq_E>
-#### Description:
-A comprehensive password management solution for Mac OS - built with Python, focusing on security, usability, and modern cryptographic standards. PMG Secure provides enterprise-grade password management capabilities with an intuitive user interface.
+# PMG Secure - Password Manager & Generator
 
-## Core Features
+A robust password management solution built with Python, focusing on security, usability, and modern cryptographic standards.
 
-### Password Generation System
-- Highly customizable password length (8-32 characters)
-- Three-tier complexity system:
-  1. Simple (Memory-Friendly)
-     - Dictionary-based word combinations
-     - Automatic capitalization
-     - Numerical suffixes (100-999)
-     - Ideal for memorable passwords
-  
-  2. Moderate (Balanced)
-     - Mixed character sets
-     - Guaranteed uppercase and lowercase
-     - Numbers and basic symbols (!@#$%)
-     - Enforced character variety
-  
-  3. Complex (Maximum Security)
-     - Full ASCII character set
-     - Special symbols
-     - Maximum entropy
-     - Cryptographically secure randomization
+## Features
 
-### Advanced Security Architecture
-- Multi-layer encryption system:
-  - PBKDF2 key derivation with 100,000 iterations
+### Password Generation
+- Customizable length (8-32 characters)
+- Three complexity tiers:
+  - **Simple**: Dictionary-based, memorable combinations
+  - **Moderate**: Mixed character sets with guaranteed variety
+  - **Complex**: Full ASCII character set with maximum entropy
+
+### Security Architecture
+- Multi-layer encryption:
+  - PBKDF2 key derivation (100,000 iterations)
   - Fernet symmetric encryption (AES-128 in CBC mode)
-  - SHA-256 password hashing
-  - Unique salt generation per user
-  
-- Secure Storage Implementation:
-  - Encrypted database (SQLite3)
-  - Protected key storage
-  - Unix file permissions (0o700)
-  - Database integrity verification
-  - Automatic corruption detection
+  - SHA-256 password hashing with unique salts
 
-### Modern User Interface
-- Built with CustomTkinter
-- Dark mode optimized
-- Organized tab structure:
-  1. Generate Password
-     - Real-time strength assessment
-     - Length slider (8-32)
-     - Complexity selector
-     - One-click copying
-  
-  2. Store Login
-     - Website categorization
-     - Encrypted username storage
-     - Secure password vault
-  
-  3. Search Login
-     - Quick credential retrieval
-     - Secure decryption
-     - Clipboard integration
-  
-  4. Browse Login
-     - Complete credential overview
-     - Secure deletion options
-     - Password visibility toggle
-  
-  5. Check Password
-     - Comprehensive realtime strength analysis
-     - Security recommendations
-     - Pattern detection
+### User Interface
+- Modern dark-mode design with CustomTkinter
+- Organized tabs for different functions:
+  1. **Generate Password**: Create and evaluate new passwords
+  2. **Store Login**: Save website credentials securely
+  3. **Search Login**: Find credentials by website name
+  4. **Browse Login**: View and manage all stored credentials
+  5. **Check Password**: Analyze password strength in real-time
 
-## Technical Specifications
+## Technical Details
 
-### File Structure
+### Storage Structure
+```
 ~/.pmg_secure/ 
-  ├── pmg_secure.db # Encrypted SQLite database 
+  ├── pmg_secure.db  # Encrypted SQLite database 
   └── pmg_secure.key # Key storage file
+```
 
+### Installation
 
-
-### Security Measures
-1. **Authentication**:
-   - Secure session management
-   - Brute force protection
-
-2. **Data Protection**:
-   - All sensitive data is encrypted before storage
-   - Passwords are hashed using SHA-256 for secure verification
-
-3. **Database Security**:
-   - The database is encrypted and protected with strict file permissions
-   - Integrity checks are performed to ensure data consistency
-
-### Installation of the Build App (the simple and convenient way)
-1. Download the PMG Secure.dmg file from within the repository
-2. Double-click the downloaded file to install the app 
-   - Drag and drop the app icon to the Applications folder, you can now use the app and register as a new user
-3. Should Apple block you from opening the app, go to:
-   - System Preferences -> Security & Privacy -> Scroll down to the "Security" section -> Look for the message about PMG Secure being blocked -> Click "Open Anyway"
-   - The PMG Secure.app should now be able to open
-
-### Installation and Setup for command line users (the curious way)
-1. **Clone the Repository**:
+1. **Clone the repository**:
    ```bash
-   git clone <https://github.com/Iomin161/CS50FinalProject.git>
-   cd <repository-directory>
+   git clone https://github.com/Iomin161/CS50FinalProject.git
+   cd CS50FinalProject
    ```
 
-2. **Create and activate a virtual environment**:
-  ```bash
-  python -m venv venv
-  source venv/bin/activate
-  ```
+2. **Set up a virtual environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-3. **Install Dependencies**:
-  ```bash
-  pip install -r requirements.txt
-  ```
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-4. **Run the Application**:
-  ```bash
-  python pmg_gui.py
-  ```
-  - This will open the app window and automatically set up the database
+4. **Make the app callable from terminal**:
+   ```bash
+   # Create a simple shell script in a directory that is in your PATH
+   echo '#!/bin/bash
+   cd /path/to/CS50FinalProject
+   source venv/bin/activate
+   python pmg_gui.py' > ~/bin/pmgsecure
+   
+   # Make it executable
+   chmod +x ~/bin/pmgsecure
+   ```
+   
+   Note: If `~/bin` isn't in your PATH, add it or use another directory that is.
+   
+   Alternatively, add an alias to your `.bashrc` or `.zshrc`:
+   ```bash
+   echo 'alias pmgsecure="cd /path/to/CS50FinalProject && source venv/bin/activate && python pmg_gui.py"' >> ~/.bashrc
+   source ~/.bashrc
+   ```
 
+5. **Run the application**:
+   ```bash
+   pmgsecure
+   ```
+   Use the ```--daemon``` flag to run the app in the background.
 ## Usage
-- Login/Register:
-  - Use the login window to access your account
-  - Use the register button to create a new account
-- Password Management:
-  - Use the tabs to generate, store, search, browse and manage your passwords securely
 
-## Contribution
-Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change
+- **First Use**: Register a new account with a strong master password
+- **Password Management**: Generate, store, and retrieve passwords through the intuitive interface
+- **Security**: All sensitive data is encrypted before storage, with multiple layers of protection
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
-This application has been developed as a final project for the Harvard CS50x course. Special thanks to David Malan, Carter Zenke, Doug Lloyd and all the people who have made this possible for me and many others around the globe. I enjoyed this course and I am eager to learn more.
+
+Developed as a final project for Harvard CS50x. Special thanks to the CS50 teaching team for their exceptional educational resources.

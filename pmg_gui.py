@@ -400,13 +400,26 @@ class PasswordManagerGUI:
             app = PasswordManagerGUI(user_id, password)
             app.run()
 
+import sys
+import os
+import subprocess
+
 if __name__ == "__main__":
-    initialize_database() 
+    # Check for --daemon flag
+    if "--daemon" in sys.argv:
+        # Relaunch the script in the background
+        cmd = [sys.executable] + [arg for arg in sys.argv if arg != "--daemon"]
+        subprocess.Popen(cmd, 
+                        stdout=open(os.devnull, 'w'),
+                        stderr=open(os.devnull, 'w'), 
+                        start_new_session=True)
+        print("Password Manager started in background")
+        sys.exit(0)
     
+    # Normal startup code
+    initialize_database() 
     login = LoginWindow()
     user_id, password = login.run()
-    
-    # Only launch main app if login is successful
     if user_id:
         app = PasswordManagerGUI(user_id, password)
         app.run()
