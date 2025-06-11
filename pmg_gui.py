@@ -21,8 +21,22 @@ class PasswordManagerGUI:
         ctk.set_default_color_theme("blue")
         
         self.window = ctk.CTk()
-        self.window.withdraw()
+        self.window.withdraw()  # Hide window during setup
         self.window.iconbitmap("")
+        self.window.title("Secure Password Manager & Generator")
+        
+        # Set initial size
+        window_width = 1000
+        window_height = 600
+        
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
+        # Now make the window visible again
         self.window.deiconify()
         self.window.title("Secure Password Manager & Generator")
         self.window.geometry("1000x600")
@@ -120,7 +134,6 @@ class PasswordManagerGUI:
         length = int(self.length_slider.get())
         complexity = int(self.complexity_slider.get())
         
-        # Handle complexity levels
         password = self.pm.generate_password(length, complexity)
         strength = self.pm.check_password_strength(password)
         
@@ -168,15 +181,12 @@ class PasswordManagerGUI:
         self.results_display.pack(pady=20, padx=20, fill="x")
     
     def _setup_browse_tab(self):
-        # Frame for the list
         self.browse_frame = ctk.CTkFrame(self.tab_browse)
         self.browse_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Scrollable frame
         self.browse_list = ctk.CTkScrollableFrame(self.browse_frame)
         self.browse_list.pack(fill="both", expand=True)
         
-        # Refresh button
         self.refresh_btn = ctk.CTkButton(
             self.tab_browse,
             text="Refresh List",
@@ -185,19 +195,16 @@ class PasswordManagerGUI:
         self.refresh_btn.pack(pady=10)
 
     def _refresh_browse_list(self):
-        # Clear existing widgets
         for widget in self.browse_list.winfo_children():
             widget.destroy()
         
         try:
-            # Get all logins for current user
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
             c.execute('SELECT id, website, encrypted_username FROM passwords WHERE user_id=?', (self.user_id,))
             logins = c.fetchall()
             conn.close()
             
-            # Create buttons for each login
             for login_id, website, username in logins:
                 login_frame = ctk.CTkFrame(self.browse_list)
                 login_frame.pack(fill="x", padx=5, pady=2)
@@ -221,95 +228,140 @@ class PasswordManagerGUI:
             error_label.pack(pady=20)
             
     def _show_login_details(self, login_id):
-        website, username, password = self.pm.get_login_by_id(login_id)
-
-        if website:
+        try:
+            website, username, password = self.pm.get_login_by_id(login_id)
+        
+            if not website:
+                return
+        
             popup = ctk.CTkToplevel(self.window)
             popup.title("Login Details")
-            popup.geometry("400x300")
-            popup.resizable(False, False)
-            popup.transient(self.window)
-            popup.grab_set()
-
-            # Calculate center position
-            self.window.update_idletasks()  
-            x = self.window.winfo_x() + (self.window.winfo_width() // 2 ) - (popup.winfo_width() // 2)
-            y = self.window.winfo_y() + (self.window.winfo_height() // 2) - (popup.winfo_height() // 2)
+            popup.geometry("400x350")
+            popup.withdraw()
         
-            popup.geometry(f"+{x}+{y}")
-
-            # Website section
-            website_frame = ctk.CTkFrame(popup)
-            website_frame.pack(pady=10, fill="x", padx=20)
-            ctk.CTkLabel(website_frame, text=f"Website: {website}").pack(side="left")
-            ctk.CTkButton(website_frame, text="Copy", 
-                 command=lambda: pyperclip.copy(website)).pack(side="right")
-    
-            # Username section
-            username_frame = ctk.CTkFrame(popup)
-            username_frame.pack(pady=10, fill="x", padx=20)
-            ctk.CTkLabel(username_frame, text=f"Username: {username}").pack(side="left")
-            ctk.CTkButton(username_frame, text="Copy", 
-                 command=lambda: pyperclip.copy(username)).pack(side="right")
-    
-            # Password section
-            password_frame = ctk.CTkFrame(popup)
-            password_frame.pack(pady=10, fill="x", padx=20)
-    
-            password_var = ctk.StringVar(value="********")
-            ctk.CTkLabel(password_frame, text="Password: ").pack(side="left")
-            password_label = ctk.CTkLabel(password_frame, textvariable=password_var)
-            password_label.pack(side="left")
-            delete_frame = ctk.CTkFrame(popup)
-            delete_frame.pack(pady=20, fill="x", padx=20)
-            
-            def delete_login():
-                confirm_popup = ctk.CTkToplevel(popup)
-                confirm_popup.title("Confirm Delete")
-                confirm_popup.geometry("300x150")
-                confirm_popup.resizable(False, False)
-                confirm_popup.transient(popup)
-                confirm_popup.grab_set()
-                
-                self.window.update_idletasks()
-                x = popup.winfo_x() + (popup.winfo_width() - confirm_popup.winfo_width()) // 2
-                y = popup.winfo_y() + (popup.winfo_height() - confirm_popup.winfo_height()) // 2
-                
-                # Set position
-                confirm_popup.geometry(f"+{x}+{y}")
-                
-                ctk.CTkLabel(confirm_popup, text="Are you sure you want to delete this login?").pack(pady=20)
-                
-                button_frame = ctk.CTkFrame(confirm_popup, fg_color="transparent")
-                button_frame.pack(pady=10)
-                
-                def confirm():
-                    self.pm.delete_login(login_id)
-                    confirm_popup.destroy()
-                    popup.destroy()
-                    self._refresh_browse_list()
-                    
-                def cancel():
-                    confirm_popup.destroy()
-                
-                ctk.CTkButton(button_frame, text="Yes", command=confirm).pack(side="left", padx=10)
-                ctk.CTkButton(button_frame, text="No", command=cancel).pack(side="left", padx=10)            
-            ctk.CTkButton(delete_frame, 
-                        text="Delete Login",
-                        fg_color="#c75d5d",
-                        command=delete_login).pack(fill="x")
-    
+            main_frame = ctk.CTkFrame(popup)
+            main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+            title_label = ctk.CTkLabel(
+                main_frame, 
+                text=f"Details for {website}", 
+                font=("Arial", 16, "bold")
+            )
+            title_label.pack(pady=(15, 20))
+        
+            # Website info
+            website_frame = ctk.CTkFrame(main_frame)
+            website_frame.pack(fill="x", padx=15, pady=5)
+        
+            website_label = ctk.CTkLabel(website_frame, text=f"Website:", width=80, anchor="w")
+            website_label.pack(side="left", padx=5, pady=8)
+        
+            website_value = ctk.CTkLabel(website_frame, text=website, anchor="w")
+            website_value.pack(side="left", fill="x", expand=True, padx=5)
+        
+            website_copy = ctk.CTkButton(
+                website_frame, 
+                text="Copy", 
+                width=60,
+                command=lambda: pyperclip.copy(website)
+            )
+            website_copy.pack(side="right", padx=5)
+        
+            # Username info
+            username_frame = ctk.CTkFrame(main_frame)
+            username_frame.pack(fill="x", padx=15, pady=5)
+        
+            username_label = ctk.CTkLabel(username_frame, text=f"Username:", width=80, anchor="w")
+            username_label.pack(side="left", padx=5, pady=8)
+        
+            username_value = ctk.CTkLabel(username_frame, text=username, anchor="w")
+            username_value.pack(side="left", fill="x", expand=True, padx=5)
+        
+            username_copy = ctk.CTkButton(
+                username_frame, 
+                text="Copy", 
+                width=60,
+                command=lambda: pyperclip.copy(username)
+            )
+            username_copy.pack(side="right", padx=5)
+        
+            # Password info
+            password_frame = ctk.CTkFrame(main_frame)
+            password_frame.pack(fill="x", padx=15, pady=5)
+        
+            password_label = ctk.CTkLabel(password_frame, text=f"Password:", width=80, anchor="w")
+            password_label.pack(side="left", padx=5, pady=8)
+        
+            password_var = ctk.StringVar(value="••••••••")
+            password_value = ctk.CTkLabel(password_frame, textvariable=password_var, anchor="w")
+            password_value.pack(side="left", fill="x", expand=True, padx=5)
+        
             def toggle_password():
-                if password_var.get() == "********":
+                current = password_var.get()
+                if current == "••••••••":
                     password_var.set(password)
                 else:
-                    password_var.set("********")
-    
-            ctk.CTkButton(password_frame, text="Copy", 
-                 command=lambda: pyperclip.copy(password)).pack(side="right")
-            ctk.CTkButton(password_frame, text="👁", 
-                 command=toggle_password,
-                 width=30).pack(side="right", padx=5)
+                    password_var.set("••••••••")
+        
+            password_toggle = ctk.CTkButton(
+                password_frame, 
+                text="👁", 
+                width=30,
+                command=toggle_password
+            )
+            password_toggle.pack(side="right", padx=5)
+        
+            password_copy = ctk.CTkButton(
+                password_frame, 
+                text="Copy", 
+                width=60,
+                command=lambda: pyperclip.copy(password)
+            )
+            password_copy.pack(side="right", padx=5)
+        
+            # Delete button
+            delete_frame = ctk.CTkFrame(main_frame)
+            delete_frame.pack(fill="x", padx=15, pady=(20, 5))
+        
+            def delete_login():
+                try:
+                    self.pm.delete_login(login_id)
+                    popup.destroy()
+                    self._refresh_browse_list()
+                except Exception as e:
+                    print(f"Error deleting login: {e}")
+        
+            delete_btn = ctk.CTkButton(
+                delete_frame,
+                text="Delete Login",
+                fg_color="#c75d5d",
+                hover_color="#aa4a4a",
+                command=delete_login
+            )
+            delete_btn.pack(fill="x")
+        
+            # Force window to be drawn first, then add grab functionality later
+            popup.update_idletasks()
+        
+            # Position the window in the center of the screen BEFORE showing it
+            screen_width = self.window.winfo_screenwidth()
+            screen_height = self.window.winfo_screenheight()
+            x = (screen_width - 400) // 2  # Using hardcoded width since window isn't visible yet
+            y = (screen_height - 350) // 2  # Using hardcoded height
+            popup.geometry(f"+{x}+{y}")
+        
+            # Now make the window visible at the correct position
+            popup.deiconify()
+        
+            # NOW we can make it modal and grab focus
+            popup.transient(self.window)
+            popup.focus_force()
+            popup.grab_set()
+        
+        except Exception as e:
+            print(f"Error in _show_login_details: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
     def _copy_to_clipboard(self):
         password = self.password_display.get("1.0", "end-1c")

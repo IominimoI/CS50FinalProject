@@ -3,16 +3,31 @@ Copyright (c) 2024 [Nico Geromin]
 Licensed under the MIT License - see LICENSE file for details
 """
 import customtkinter as ctk
-import hashlib
+import os
 import sqlite3
+import base64
 from config import DB_PATH
+import hashlib
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 
 class LoginWindow:
     def __init__(self):
         self.window = ctk.CTk()
         self.window.title("Login")
-        self.window.geometry("450x350")
-
+        
+        # Set initial size
+        window_width = 450
+        window_height = 350
+        self.window.geometry(f"{window_width}x{window_height}")
+        
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
         header_label = ctk.CTkLabel(
             self.window, 
             text="Password Manager and Generator",
@@ -31,7 +46,6 @@ class LoginWindow:
         self.username_label.pack(side="left", padx=5)
         self.username_entry = ctk.CTkEntry(username_frame, width=200)
         self.username_entry.pack(side="left", padx=5)
-        # Add invisible placeholder with same width as info button
         ctk.CTkLabel(username_frame, text="", width=30).pack(side="left", padx=5)
         
         # Password section
@@ -72,25 +86,58 @@ class LoginWindow:
         
         info_label = ctk.CTkLabel(info_popup, text=guidelines, justify="left")
         info_label.pack(pady=20, padx=20) 
+        pass 
            
-    def _hash_password(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+    def _hash_password(self, password, salt=None):
+        """Create a secure password hash using PBKDF2"""
+        if salt is None:
+            # Generate a random salt for new passwords
+            salt = os.urandom(16)
+            
+        # Use PBKDF2 with 100,000 iterations (adjust based on your performance needs)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+        )
+        password_hash = kdf.derive(password.encode())
+        
+        # Convert binary data to storable strings
+        password_hash_b64 = base64.b64encode(password_hash).decode('utf-8')
+        salt_b64 = base64.b64encode(salt).decode('utf-8')
+        
+        return password_hash_b64, salt_b64
+    
+    def _verify_password(self, password, stored_hash, stored_salt):
+        """Verify a password against a stored hash and salt"""
+        # Convert stored strings back to binary
+        salt = base64.b64decode(stored_salt)
+        
+        # Generate hash with the same salt
+        calculated_hash, _ = self._hash_password(password, salt)
+        
+        # Compare in constant time to prevent timing attacks
+        return calculated_hash == stored_hash
     
     def _login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        password_hash = self._hash_password(password)
-        self.user_password = password
         
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('SELECT id FROM users WHERE username=? AND password_hash=?', (username, password_hash))
+        c.execute('SELECT id, password_hash, password_salt FROM users WHERE username=?', (username,))
         result = c.fetchone()
         conn.close()
         
-        if result:
-            self.user_id = result[0]
-            self.window.destroy()
+        if result and result[1] and result[2]:
+            user_id, stored_hash, stored_salt = result
+            if self._verify_password(password, stored_hash, stored_salt):
+                self.user_id = user_id
+                self.user_password = password
+                self.window.destroy()
+            else:
+                self.message_label.configure(text="Invalid credentials!")
         else:
             self.message_label.configure(text="Invalid credentials!")
     
@@ -107,12 +154,14 @@ class LoginWindow:
             self.message_label.configure(text="Password must be at least 8 characters!")
             return
         
-        password_hash = self._hash_password(password)
+        # Create secure hash and salt
+        password_hash, password_salt = self._hash_password(password)
         
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         try:
-            c.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, password_hash))
+            c.execute('INSERT INTO users (username, password_hash, password_salt) VALUES (?, ?, ?)', 
+                     (username, password_hash, password_salt))
             conn.commit()
             self.message_label.configure(text="Registration successful!")
         except sqlite3.IntegrityError:

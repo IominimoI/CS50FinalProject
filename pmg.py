@@ -210,18 +210,46 @@ class PasswordManager:
         return hashlib.sha256(password.encode()).hexdigest()
 
     def get_login_by_id(self, login_id):
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        c.execute('SELECT website, encrypted_username, encrypted_password FROM passwords WHERE id=?', (login_id,))
-        result = c.fetchone()
-        conn.close()
-        
-        if result:
-            website, encrypted_username, encrypted_password = result
-            decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
-            decrypted_username = self.fernet.decrypt(encrypted_username.encode()).decode()
-            return website, decrypted_username, decrypted_password
-        return None, None, None
+        try:
+            print(f"Fetching login with ID: {login_id}")
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            
+            # First check if the ID exists
+            c.execute('SELECT COUNT(*) FROM passwords WHERE id=?', (login_id,))
+            count = c.fetchone()[0]
+            if count == 0:
+                print(f"No record found with ID: {login_id}")
+                conn.close()
+                return None, None, None
+                
+            c.execute('SELECT website, encrypted_username, encrypted_password FROM passwords WHERE id=?', (login_id,))
+            result = c.fetchone()
+            conn.close()
+            
+            if result:
+                website, encrypted_username, encrypted_password = result
+                print(f"Found login for website: {website}")
+                
+                try:
+                    # Add debugging for encryption keys
+                    print(f"Decrypting data...")
+                    decrypted_username = self.fernet.decrypt(encrypted_username.encode()).decode()
+                    decrypted_password = self.fernet.decrypt(encrypted_password.encode()).decode()
+                    print(f"Successfully decrypted login data")
+                    return website, decrypted_username, decrypted_password
+                except Exception as e:
+                    print(f"Decryption error: {e}")
+                    # Return data that can still be displayed even if decryption fails
+                    return website, f"[Decryption Error: {str(e)[:30]}...]", "[Decryption Error]"
+            else:
+                print("Query returned no results despite count check")
+                return None, None, None
+        except Exception as e:
+            print(f"Database error in get_login_by_id: {e}")
+            import traceback
+            traceback.print_exc()
+            return None, None, None
 
     def verify_database_integrity(self):
         conn = sqlite3.connect(self.db_path)
