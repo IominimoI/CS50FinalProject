@@ -2,6 +2,8 @@
 
 A robust password management solution built with Python, focusing on security, usability, and modern cryptographic standards.
 
+![PMG Secure Screenshot](assets/screenshot.png)
+
 ## Features
 
 ### Password Generation

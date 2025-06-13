@@ -407,8 +407,10 @@ import subprocess
 if __name__ == "__main__":
     # Check for --daemon flag
     if "--daemon" in sys.argv:
-        # Relaunch the script in the background
-        cmd = [sys.executable] + [arg for arg in sys.argv if arg != "--daemon"]
+        # Relaunch the script in the background with no additional arguments
+        # Just use the Python interpreter and script name
+        cmd = [sys.executable, sys.argv[0]]
+        
         subprocess.Popen(cmd, 
                         stdout=open(os.devnull, 'w'),
                         stderr=open(os.devnull, 'w'), 
