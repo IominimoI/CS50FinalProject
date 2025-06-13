@@ -39,7 +39,7 @@ A robust password management solution built with Python, focusing on security, u
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/Iomin161/CS50FinalProject.git
+   git clone https://github.com/IominimoI/CS50FinalProject.git
    cd CS50FinalProject
    ```
 
